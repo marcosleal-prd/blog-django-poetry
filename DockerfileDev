@@ -1,0 +1,21 @@
+FROM python:3.7.5-slim-stretch
+
+LABEL version="1.0.0"
+LABEL description="Blog API desenvolvido com Python, Django, Poetry e Docker"
+LABEL maintainer="Marcos V. Leal <marcosleal.prd@gmail.com>"
+LABEL environment="development"
+
+RUN pip install --upgrade pip
+RUN adduser --disabled-password --gecos '' worker
+
+USER worker
+
+WORKDIR /home/worker
+
+ENV PATH="/home/worker/.local/bin:${PATH}"
+
+COPY . /home/worker
+
+RUN pip install poetry
+RUN poetry config virtualenvs.create false --local
+RUN poetry install --no-root

@@ -1,0 +1,50 @@
+version: "3.7"
+services:
+  db:
+    image: postgres:12-alpine
+    environment:
+      - POSTGRES_PASSWORD=development-password
+    ports:
+      - "5432:5432"
+    networks:
+      - backend
+
+  app:
+    build:
+      context: .
+      dockerfile: DockerfileDev
+    env_file: .env
+    volumes:
+      - .:/app
+    ports:
+      - "${BIND_PORT}:${BIND_PORT}"
+    networks:
+      - backend
+    depends_on:
+      - db
+    command: ["./scripts/wait-for-it.sh", "${DB_HOST}:${DB_PORT}", "-t", "120", "--", "./scripts/start.sh"]
+
+  integration-tests:
+    image: python:3.7.5-slim-stretch
+    env_file: .env
+    working_dir: /app
+    networks:
+      - backend
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - app
+    command: ["./scripts/start-tests.sh"]
+
+  lint:
+    build:
+      dockerfile: DockerfileDev
+      context: .
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: ["./scripts/start-lint.sh"]
+
+networks:
+  backend:
